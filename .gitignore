@@ -35,6 +35,9 @@ yarn-error.log*
 .env.*.local
 !.env.example
 
+# codebuddy (AI assistant data - never commit)
+.codebuddy/
+
 # vercel
 .vercel
 
