@@ -49,6 +49,9 @@ contract BlockBillInvoice is ERC1155, Ownable, ReentrancyGuard {
     // Token ID => 在客户列表中的索引
     mapping(uint256 => uint256) private _clientInvoiceIndex;
     
+    // Token ID => 自定义元数据 URI
+    mapping(uint256 => string) private _tokenURIs;
+    
     // ==================== 事件 ====================
     
     event InvoiceMinted(uint256 indexed tokenId, address indexed merchant, address client, uint256 amount);
@@ -66,8 +69,8 @@ contract BlockBillInvoice is ERC1155, Ownable, ReentrancyGuard {
      * @dev 创建发票
      * @param _client 客户地址
      * @param _amount 发票金额 (wei)
-     * @param _uri 元数据 URI (IPFS)
-     * 
+     * @param _metadataUri 元数据 URI (IPFS)
+     *
      * 逻辑：
      * 1. 铸造 NFT 给商家
      * 2. 初始化 Invoice 结构体
@@ -76,22 +79,20 @@ contract BlockBillInvoice is ERC1155, Ownable, ReentrancyGuard {
     function createInvoice(
         address _client,
         uint256 _amount,
-        string calldata _uri
+        string calldata _metadataUri
     ) external nonReentrant returns (uint256) {
         require(_client != address(0), "Invalid client address");
         require(_amount > 0, "Amount must be greater than 0");
         require(_client != msg.sender, "Client cannot be merchant");
-        
+
         uint256 tokenId = _nextTokenId++;
-        
+
+        // 存储元数据 URI
+        _tokenURIs[tokenId] = _metadataUri;
+
         // 铸造 NFT 给商家（发行 1 份）
         _mint(msg.sender, tokenId, 1, "");
-        
-        // 设置元数据 URI
-        if (bytes(_uri).length > 0) {
-            _setURI(tokenId, _uri);
-        }
-        
+
         // 初始化发票数据
         invoices[tokenId] = Invoice({
             merchant: msg.sender,
@@ -100,17 +101,17 @@ contract BlockBillInvoice is ERC1155, Ownable, ReentrancyGuard {
             createdAt: block.timestamp,
             status: Status.Pending
         });
-        
+
         // 添加到商家列表
         _merchantInvoiceIndex[tokenId] = merchantInvoices[msg.sender].length;
         merchantInvoices[msg.sender].push(tokenId);
-        
+
         // 添加到客户列表
         _clientInvoiceIndex[tokenId] = clientInvoices[_client].length;
         clientInvoices[_client].push(tokenId);
-        
+
         emit InvoiceMinted(tokenId, msg.sender, _client, _amount);
-        
+
         return tokenId;
     }
     
@@ -177,9 +178,17 @@ contract BlockBillInvoice is ERC1155, Ownable, ReentrancyGuard {
         require(invoice.merchant != address(0), "Invoice does not exist");
         require(msg.sender == invoice.merchant, "Only merchant can update metadata");
         
-        _setURI(_tokenId, _newUri);
+        _tokenURIs[_tokenId] = _newUri;
         
         emit MetadataUpdated(_tokenId, _newUri);
+    }
+    
+    /**
+     * @dev 覆盖 ERC1155 的 uri 函数，返回自定义的 token URI
+     */
+    function uri(uint256 _tokenId) public view override returns (string memory) {
+        string memory customUri = _tokenURIs[_tokenId];
+        return bytes(customUri).length > 0 ? customUri : super.uri(_tokenId);
     }
     
     // ==================== 读取函数 ====================
