@@ -12,31 +12,61 @@ import {
   Menu, Shield, Zap, Cloud, Wallet, Send, CreditCard,
   PlayCircle, Info, X, Loader2, Receipt
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 
-const contract = getContract({
-  client,
-  chain,
-  address: CONTRACT_ADDRESS,
-});
+// 检查地址是否有效
+const isValidAddress = (address: string | undefined): address is `0x${string}` => {
+  return !!address && /^0x[a-fA-F0-9]{40}$/.test(address);
+};
 
-export default function Home() {
-  const router = useRouter();
-  const account = useActiveAccount();
+// 带有效合约的统计组件
+function ContractStatsWithContract() {
+  const contract = useMemo(() => {
+    return getContract({
+      client,
+      chain,
+      address: CONTRACT_ADDRESS!,
+    });
+  }, []);
 
-  // 检测浏览器环境
-  const [hasWallet, setHasWallet] = useState(false);
-
-  // 获取全局统计数据
   const { data: totalInvoices, isLoading: statsLoading } = useReadContract(
     totalSupply,
     { contract, id: BigInt(0) }
   );
 
-  useEffect(() => {
-    // 检测是否安装 MetaMask 或其他 Web3 钱包
-    setHasWallet(typeof window !== "undefined" && typeof (window as { ethereum?: unknown }).ethereum !== "undefined");
-  }, []);
+  const totalInvoicesCount = totalInvoices ? Number(totalInvoices) : 0;
+
+  return (
+    <StatCard
+      icon={<Receipt className="w-6 h-6 text-[#137fec]" />}
+      value={statsLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : totalInvoicesCount.toLocaleString()}
+      label="已处理发票"
+    />
+  );
+}
+
+// 无效合约的统计组件
+function ContractStatsPlaceholder() {
+  return (
+    <StatCard
+      icon={<Receipt className="w-6 h-6 text-[#137fec]" />}
+      value="待配置"
+      label="已处理发票"
+    />
+  );
+}
+
+// 合约统计组件包装器
+function ContractStats() {
+  return isValidAddress(CONTRACT_ADDRESS) ? <ContractStatsWithContract /> : <ContractStatsPlaceholder />;
+}
+
+export default function Home() {
+  const router = useRouter();
+  const account = useActiveAccount();
+
+  // 检测浏览器环境（在组件初始化时直接设置，不使用 useEffect）
+  const hasWallet = typeof window !== "undefined" && typeof (window as { ethereum?: unknown }).ethereum !== "undefined";
 
   // 处理进入应用按钮点击
   const handleEnterApp = () => {
@@ -52,8 +82,6 @@ export default function Home() {
       window.open("https://metamask.io/download/", "_blank");
     }
   };
-
-  const totalInvoicesCount = totalInvoices ? Number(totalInvoices) : 0;
 
   return (
     <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#050505] text-slate-900 dark:text-slate-50">
@@ -146,11 +174,16 @@ export default function Home() {
         <section className="w-full px-4 md:px-10 py-12">
           <div className="max-w-7xl mx-auto w-full">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <StatCard
-                icon={<Receipt className="w-6 h-6 text-[#137fec]" />}
-                value={statsLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : totalInvoicesCount.toLocaleString()}
-                label="已处理发票"
-              />
+              {/* 只在有有效合约地址时显示统计数据 */}
+              {isValidAddress(CONTRACT_ADDRESS) ? (
+                <ContractStats />
+              ) : (
+                <StatCard
+                  icon={<Receipt className="w-6 h-6 text-[#137fec]" />}
+                  value="待配置"
+                  label="已处理发票"
+                />
+              )}
               <StatCard
                 icon={<Wallet className="w-6 h-6 text-green-500" />}
                 value="Sepolia"
