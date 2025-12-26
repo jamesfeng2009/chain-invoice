@@ -1,10 +1,9 @@
 // 智能合约函数封装
 // 与用户提供的合约接口对应
 
-import { prepareContractCall, toWei, toEther } from "thirdweb";
+import { prepareContractCall } from "thirdweb";
 import type { ThirdwebContract } from "thirdweb";
 import { InvoiceStatus } from "@/types/contract";
-import type { Invoice } from "@/types/contract";
 
 /**
  * 1. 创建发票 (createInvoice)
@@ -189,14 +188,15 @@ export function formatInvoiceStatus(status: number | InvoiceStatus): string {
  * 辅助函数：格式化金额（从 wei 转换为 ETH）
  */
 export function formatWeiToEth(wei: bigint): string {
-  return toEther(wei);
+  const ethValue = Number(wei) / 1e18;
+  return ethValue.toString();
 }
 
 /**
  * 辅助函数：将 ETH 转换为 wei
  */
 export function formatEthToWei(eth: number): bigint {
-  return toWei(eth.toString());
+  return BigInt(Math.floor(eth * 1e18));
 }
 
 /**
