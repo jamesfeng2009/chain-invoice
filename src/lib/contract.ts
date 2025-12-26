@@ -1,8 +1,10 @@
 // 智能合约函数封装
 // 与用户提供的合约接口对应
 
-import { Contract, prepareContractCall, toWei, toEther } from "thirdweb";
-import type { InvoiceStatus, Invoice } from "@/types/contract";
+import { prepareContractCall, toWei, toEther } from "thirdweb";
+import type { ThirdwebContract } from "thirdweb";
+import { InvoiceStatus } from "@/types/contract";
+import type { Invoice } from "@/types/contract";
 
 /**
  * 1. 创建发票 (createInvoice)
@@ -15,7 +17,7 @@ import type { InvoiceStatus, Invoice } from "@/types/contract";
  * @returns 交易准备对象
  */
 export function prepareCreateInvoice(
-  contract: Contract,
+  contract: ThirdwebContract,
   client: string,
   amount: bigint,
   uri: string
@@ -38,7 +40,7 @@ export function prepareCreateInvoice(
  * @returns 交易准备对象
  */
 export function preparePayInvoice(
-  contract: Contract,
+  contract: ThirdwebContract,
   tokenId: bigint,
   value: bigint
 ) {
@@ -60,7 +62,7 @@ export function preparePayInvoice(
  * @returns 交易准备对象
  */
 export function prepareCancelInvoice(
-  contract: Contract,
+  contract: ThirdwebContract,
   tokenId: bigint
 ) {
   return prepareContractCall({
@@ -80,7 +82,7 @@ export function prepareCancelInvoice(
  * @returns 交易准备对象
  */
 export function prepareUpdateMetadata(
-  contract: Contract,
+  contract: ThirdwebContract,
   tokenId: bigint,
   newUri: string
 ) {
@@ -100,7 +102,7 @@ export function prepareUpdateMetadata(
  * @returns 发票结构体
  */
 export function prepareGetInvoice(
-  contract: Contract,
+  contract: ThirdwebContract,
   tokenId: bigint
 ) {
   return prepareContractCall({
@@ -113,13 +115,13 @@ export function prepareGetInvoice(
 /**
  * 6. 获取商家创建的发票列表 (getInvoicesByMerchant)
  * 获取该商家创建的所有发票 Token ID 列表。
- * 
+ *
  * @param contract - 合约实例
  * @param merchant - 商家地址
  * @returns Token ID 数组
  */
 export function prepareGetInvoicesByMerchant(
-  contract: Contract,
+  contract: ThirdwebContract,
   merchant: string
 ) {
   return prepareContractCall({
@@ -138,7 +140,7 @@ export function prepareGetInvoicesByMerchant(
  * @returns Token ID 数组
  */
 export function prepareGetInvoicesByClient(
-  contract: Contract,
+  contract: ThirdwebContract,
   client: string
 ) {
   return prepareContractCall({
@@ -157,7 +159,7 @@ export function prepareGetInvoicesByClient(
  * @returns 是否已支付
  */
 export function prepareIsInvoicePaid(
-  contract: Contract,
+  contract: ThirdwebContract,
   tokenId: bigint
 ) {
   return prepareContractCall({

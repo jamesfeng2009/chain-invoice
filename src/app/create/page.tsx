@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getContract } from "thirdweb";
@@ -15,16 +15,26 @@ import {
   Menu, CheckCircle, AlertCircle, Loader2
 } from "lucide-react";
 
-const contract = getContract({
-  client,
-  chain,
-  address: CONTRACT_ADDRESS,
-});
+// 检查地址是否有效
+const isValidAddress = (address: string | undefined): address is `0x${string}` => {
+  return !!address && /^0x[a-fA-F0-9]{40}$/.test(address);
+};
 
 export default function CreateInvoice() {
   const router = useRouter();
   const account = useActiveAccount();
   const { mutate: sendTransaction, isPending } = useSendTransaction();
+
+  const contract = useMemo(() => {
+    if (!isValidAddress(CONTRACT_ADDRESS)) {
+      return null;
+    }
+    return getContract({
+      client,
+      chain,
+      address: CONTRACT_ADDRESS,
+    });
+  }, []);
 
   const [formData, setFormData] = useState<CreateInvoiceForm>({
     clientAddress: "",
@@ -108,6 +118,11 @@ export default function CreateInvoice() {
       return;
     }
 
+    if (!contract) {
+      alert("合约地址未配置");
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -153,6 +168,26 @@ export default function CreateInvoice() {
       }, 2000);
     }
   }, [success, tokenId, router]);
+
+  // 如果合约地址无效，显示提示
+  if (!isValidAddress(CONTRACT_ADDRESS)) {
+    return (
+      <div className="min-h-screen bg-[#f6f7f8] dark:bg-[#101922] flex items-center justify-center p-6">
+        <div className="bg-white dark:bg-[#1e293b] rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 p-12 text-center max-w-md">
+          <AlertCircle className="w-20 h-20 mx-auto text-yellow-500 mb-6" />
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-4">合约地址未配置</h2>
+          <p className="text-slate-500 dark:text-slate-400 mb-6">请在环境变量中配置 CONTRACT_ADDRESS</p>
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-[#137fec] text-white font-bold rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            返回仪表盘
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (success) {
     return (

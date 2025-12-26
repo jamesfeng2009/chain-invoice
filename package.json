@@ -21,6 +21,9 @@
     "tailwind-merge": "^3.4.0",
     "thirdweb": "^5.116.1"
   },
+  "overrides": {
+    "use-sync-external-store": "^1.2.0"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^5.1.0",
@@ -31,6 +34,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "hardhat": "^2.22.0",
+    "stylelint": "^16.26.1",
+    "stylelint-config-standard": "^39.0.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
